@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
+import 'home_screen.dart';
 import 'browse_screen.dart';
 import 'cart_screen.dart';
 import 'my_orders_screen.dart';
@@ -17,6 +18,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   final _authService = AuthService();
 
   final _screens = const [
+    HomeScreen(),
     BrowseScreen(),
     CartScreen(),
     MyOrdersScreen(),
@@ -30,12 +32,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const titles = ['Browse Books', 'My Cart', 'My Orders'];
-    final isBrowse = _index == 0;
+    const titles = ['', '', 'My Cart', 'My Orders'];
+    final hasOwnHeader = _index == 0 || _index == 1;
 
     return Scaffold(
-      backgroundColor: isBrowse ? AppColors.plumDark : AppColors.lavender,
-      appBar: isBrowse
+      backgroundColor: AppColors.lavender,
+      appBar: hasOwnHeader
           ? null
           : AppBar(
         title: Text(titles[_index]),
@@ -46,6 +48,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
+          NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.menu_book_outlined), label: 'Browse'),
           NavigationDestination(icon: Icon(Icons.shopping_bag_outlined), label: 'Cart'),
           NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'Orders'),

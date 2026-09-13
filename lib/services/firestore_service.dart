@@ -14,8 +14,9 @@ class FirestoreService {
             (snap) => snap.docs.map((d) => Book.fromMap(d.id, d.data())).toList());
   }
 
-  Future<void> addBook(Book book) async {
-    await _db.collection('books').add(book.toMap());
+  Future<String> addBook(Book book) async {
+    final ref = await _db.collection('books').add(book.toMap());
+    return ref.id;
   }
 
   Future<void> updateBook(Book book) async {
@@ -24,6 +25,17 @@ class FirestoreService {
 
   Future<void> deleteBook(String bookId) async {
     await _db.collection('books').doc(bookId).delete();
+  }
+
+  // Ensures only ONE book has isBookOfMonth = true, by clearing it on
+  // every other book that currently has it set.
+  Future<void> ensureSingleBookOfMonth(String keepBookId) async {
+    final snap = await _db.collection('books').where('isBookOfMonth', isEqualTo: true).get();
+    for (final doc in snap.docs) {
+      if (doc.id != keepBookId) {
+        await doc.reference.update({'isBookOfMonth': false});
+      }
+    }
   }
 
   // ---------------- CART ----------------
@@ -81,7 +93,7 @@ class FirestoreService {
       userId: uid,
       items: items,
       total: total,
-      status: 'pending',
+      status: 'received',
       createdAt: DateTime.now(),
       deliveryName: deliveryName,
       deliveryAddress: deliveryAddress,

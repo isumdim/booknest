@@ -7,7 +7,8 @@ class Book {
   final int stock;
   final String category;
   final String imageUrl;
-  final bool featured;
+  final bool isBookOfMonth;
+  final bool isBestSeller;
 
   Book({
     required this.id,
@@ -18,7 +19,8 @@ class Book {
     required this.stock,
     this.category = 'General',
     this.imageUrl = '',
-    this.featured = false,
+    this.isBookOfMonth = false,
+    this.isBestSeller = false,
   });
 
   factory Book.fromMap(String id, Map<String, dynamic> map) {
@@ -31,7 +33,8 @@ class Book {
       stock: map['stock'] ?? 0,
       category: map['category'] ?? 'General',
       imageUrl: map['imageUrl'] ?? '',
-      featured: map['featured'] ?? false,
+      isBookOfMonth: map['isBookOfMonth'] ?? false,
+      isBestSeller: map['isBestSeller'] ?? false,
     );
   }
 
@@ -44,7 +47,8 @@ class Book {
       'stock': stock,
       'category': category,
       'imageUrl': imageUrl,
-      'featured': featured,
+      'isBookOfMonth': isBookOfMonth,
+      'isBestSeller': isBestSeller,
     };
   }
 }

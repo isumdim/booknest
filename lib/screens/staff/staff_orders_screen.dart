@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/order_status.dart';
 import '../../services/firestore_service.dart';
 import '../../models/order_model.dart';
 
@@ -26,27 +27,23 @@ class StaffOrdersScreen extends StatelessWidget {
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ExpansionTile(
+                leading: Icon(orderStatusIcon(order.status), color: orderStatusColor(order.status)),
                 title: Text('Order #${order.id.substring(0, 6)} • Rs. ${order.total.toStringAsFixed(2)}'),
-                subtitle: Text('${order.items.length} item(s) • Status: ${order.status}'),
-                trailing: order.status == 'fulfilled'
-                    ? const Icon(Icons.check_circle, color: Colors.green)
-                    : null,
+                subtitle: Text('${order.items.length} item(s) • ${orderStatusLabel(order.status)}'),
                 childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 children: [
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Delivery Details',
-                        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.black)),
+                    child: Text('Delivery Details', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.black)),
                   ),
                   const SizedBox(height: 8),
-                  _DetailRow(icon: Icons.person_outline, label: 'Name', value: order.deliveryName),
-                  _DetailRow(icon: Icons.location_on_outlined, label: 'Address', value: order.deliveryAddress),
-                  _DetailRow(icon: Icons.phone_outlined, label: 'Phone', value: order.deliveryPhone),
+                  _DetailRow(icon: Icons.person_outline, value: order.deliveryName),
+                  _DetailRow(icon: Icons.location_on_outlined, value: order.deliveryAddress),
+                  _DetailRow(icon: Icons.phone_outlined, value: order.deliveryPhone),
                   const SizedBox(height: 16),
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Items',
-                        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.black)),
+                    child: Text('Items', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.black)),
                   ),
                   const SizedBox(height: 8),
                   for (final item in order.items)
@@ -60,14 +57,23 @@ class StaffOrdersScreen extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 16),
-                  if (order.status == 'pending')
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => firestoreService.updateOrderStatus(order.id, 'fulfilled'),
-                        child: const Text('Mark Fulfilled'),
-                      ),
-                    ),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Update Status', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.black)),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: orderStatusStages.contains(order.status) ? order.status : orderStatusStages.first,
+                    decoration: const InputDecoration(isDense: true),
+                    items: orderStatusStages
+                        .map((s) => DropdownMenuItem(value: s, child: Text(orderStatusLabel(s))))
+                        .toList(),
+                    onChanged: (newStatus) {
+                      if (newStatus != null) {
+                        firestoreService.updateOrderStatus(order.id, newStatus);
+                      }
+                    },
+                  ),
                 ],
               ),
             );
@@ -80,9 +86,8 @@ class StaffOrdersScreen extends StatelessWidget {
 
 class _DetailRow extends StatelessWidget {
   final IconData icon;
-  final String label;
   final String value;
-  const _DetailRow({required this.icon, required this.label, required this.value});
+  const _DetailRow({required this.icon, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +100,7 @@ class _DetailRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              value.isEmpty ? '$label: —' : value,
+              value.isEmpty ? '—' : value,
               style: const TextStyle(fontSize: 13, color: AppColors.black),
             ),
           ),

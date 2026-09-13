@@ -44,17 +44,17 @@ class ManageBooksScreen extends StatelessWidget {
                           )
                               : const Icon(Icons.menu_book, color: AppColors.plum),
                         ),
-                        if (book.featured)
-                          const Positioned(
-                            top: 0,
-                            right: 0,
-                            child: Icon(Icons.star, size: 14, color: AppColors.lightPurple),
-                          ),
+                        if (book.isBookOfMonth)
+                          const Positioned(top: 0, right: 0, child: Icon(Icons.star, size: 14, color: Colors.amber)),
                       ],
                     ),
                   ),
                   title: Text(book.title),
-                  subtitle: Text('${book.author} • Rs. ${book.price.toStringAsFixed(2)} • Stock: ${book.stock} • ${book.category}'),
+                  subtitle: Text(
+                    '${book.author} • Rs. ${book.price.toStringAsFixed(2)} • Stock: ${book.stock} • ${book.category}'
+                        '${book.isBookOfMonth ? ' • Book of the Month' : ''}'
+                        '${book.isBestSeller ? ' • Best Seller' : ''}',
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -87,7 +87,8 @@ class ManageBooksScreen extends StatelessWidget {
     final categoryCtrl = TextEditingController(text: book?.category ?? 'General');
     final imageUrlCtrl = TextEditingController(text: book?.imageUrl ?? '');
     final firestoreService = FirestoreService();
-    bool isFeatured = book?.featured ?? false;
+    bool isBookOfMonth = book?.isBookOfMonth ?? false;
+    bool isBestSeller = book?.isBestSeller ?? false;
 
     showDialog(
       context: context,
@@ -154,10 +155,18 @@ class ManageBooksScreen extends StatelessWidget {
                       const SizedBox(height: 8),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Show in Featured / Popular'),
-                        value: isFeatured,
+                        title: const Text('Book of the Month'),
+                        subtitle: const Text('Only one book can hold this at a time', style: TextStyle(fontSize: 11)),
+                        value: isBookOfMonth,
                         activeThumbColor: AppColors.plum,
-                        onChanged: (value) => setDialogState(() => isFeatured = value),
+                        onChanged: (value) => setDialogState(() => isBookOfMonth = value),
+                      ),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Best Seller'),
+                        value: isBestSeller,
+                        activeThumbColor: AppColors.plum,
+                        onChanged: (value) => setDialogState(() => isBestSeller = value),
                       ),
                     ],
                   ),
@@ -177,12 +186,19 @@ class ManageBooksScreen extends StatelessWidget {
                       stock: int.parse(stockCtrl.text),
                       category: categoryCtrl.text.trim(),
                       imageUrl: imageUrlCtrl.text.trim(),
-                      featured: isFeatured,
+                      isBookOfMonth: isBookOfMonth,
+                      isBestSeller: isBestSeller,
                     );
+
+                    String savedId;
                     if (book == null) {
-                      await firestoreService.addBook(newBook);
+                      savedId = await firestoreService.addBook(newBook);
                     } else {
                       await firestoreService.updateBook(newBook);
+                      savedId = newBook.id;
+                    }
+                    if (isBookOfMonth) {
+                      await firestoreService.ensureSingleBookOfMonth(savedId);
                     }
                     if (context.mounted) Navigator.pop(context);
                   },
